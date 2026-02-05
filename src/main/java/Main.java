@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -14,7 +15,7 @@ public class Main {
                 String output = String.join(" ", Arrays.copyOfRange(cmds, 1, cmds.length));
                 System.out.println(output);
             }
-            else System.out.println(command + ": command not found");
+            else System.out.println(input + ": command not found");
         }
         
     }
