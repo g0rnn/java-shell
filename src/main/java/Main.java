@@ -11,7 +11,9 @@ public class Main {
 
             if (cmds[0].equals("exit")) return;
             else if (cmds[0].equals("echo")) {
-                System.out.println(cmds[1]);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1; i < cmds.length; i++) sb.append(cmds[i]).append(" ");
+                System.out.println(sb);
             }
             else System.out.println(command + ": command not found");
         }
