@@ -19,10 +19,10 @@ public class Commands {
 			String builtinCmd = param[1];
 			
 			if (commands.containsKey(builtinCmd)) {
-				System.out.println(builtinCmd + ": not found");
+				System.out.println(builtinCmd + " is a shell builtin");
 				return;
 			}
-			System.out.println(builtinCmd + " is a shell builtin");
+			System.out.println(builtinCmd + ": not found");
 		});
 	}
 	
