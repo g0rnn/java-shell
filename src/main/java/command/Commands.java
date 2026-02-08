@@ -1,10 +1,13 @@
 package command;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.io.File;
+import java.io.IOException;
 
 public class Commands {
 
@@ -41,11 +44,39 @@ public class Commands {
 	
 	public void act(String input) {
 		String[] cmd = input.split(" ");
-		Consumer<String[]> action = commands.getOrDefault(cmd[0], this::notFound);
+		Consumer<String[]> action = commands.getOrDefault(cmd[0], this::notCommand);
 		action.accept(cmd);
 	}
 	
-	public void notFound(String[] param) {
-		System.out.println(param[0] + ": command not found");
+	public void notCommand(String[] param) {
+		String cmd = param[0];
+		String pathEnv = System.getenv("PATH");
+		String[] paths = pathEnv.split(System.getProperty("path.separator"));
+
+		for (String path : paths) {
+			File exe = new File(path, cmd); // 단지 이 경로를 가리키는 객체만 생성한 상태
+			if (exe.exists() && exe.canExecute()) {
+				List<String> argv = new ArrayList<>();
+				argv.add(exe.getAbsolutePath());
+				for (int i = 1; i < param.length; i++) argv.add(param[i]);
+
+				ProcessBuilder pb = new ProcessBuilder(argv);
+				pb.inheritIO();
+
+				try {
+					Process p = pb.start();
+					p.waitFor();
+				} catch (IOException e) {
+					// 실행 자체가 실패한 경우
+					System.out.println(cmd + ": execution failed");
+				} catch (InterruptedException e) {
+					// 인터럽트 상태 복구(관례)
+					Thread.currentThread().interrupt();
+				}
+				return;
+			}
+		}
+
+		System.out.println(cmd + ": command not found");
 	}
 }
