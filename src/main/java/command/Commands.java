@@ -27,10 +27,6 @@ public class Commands {
 			String pathEnv = System.getenv("PATH");
 			String[] paths = pathEnv.split(System.getProperty("path.separator"));
 
-			System.err.println("cmd=[" + builtinCmd + "] len=" + builtinCmd.length());
-			for (int i = 0; i < builtinCmd.length(); i++) {
-				System.err.println((int) builtinCmd.charAt(i));
-			}
 			for (String path : paths) {
 				File file = new File(path, builtinCmd); // 단지 이 경로를 가리키는 객체만 생성한 상태
 				if (file.exists() && file.canExecute()) {
