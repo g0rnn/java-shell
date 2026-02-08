@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.io.File;
 
 public class Commands {
 
@@ -22,7 +23,21 @@ public class Commands {
 				System.out.println(builtinCmd + " is a shell builtin");
 				return;
 			}
-			System.out.println(builtinCmd + ": not found");
+			
+			String pathEnv = System.getenv("PATH");
+			String[] paths = pathEnv.split(System.getProperty("path.separator"));
+
+			System.err.println("cmd=[" + builtinCmd + "] len=" + builtinCmd.length());
+			for (int i = 0; i < builtinCmd.length(); i++) {
+				System.err.println((int) builtinCmd.charAt(i));
+			}
+			for (String path : paths) {
+				File file = new File(path, builtinCmd); // 단지 이 경로를 가리키는 객체만 생성한 상태
+				if (file.exists() && file.canExecute()) {
+					System.out.println(builtinCmd + " is " + file.getAbsolutePath());
+					return;
+				}
+			}
 		});
 	}
 	
