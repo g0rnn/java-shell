@@ -34,6 +34,8 @@ public class Commands {
 					return;
 				}
 			}
+
+			System.out.println(builtinCmd + ": command not found");
 		});
 	}
 	
