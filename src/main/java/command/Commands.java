@@ -57,7 +57,7 @@ public class Commands {
 			File exe = new File(path, cmd); // 단지 이 경로를 가리키는 객체만 생성한 상태
 			if (exe.exists() && exe.canExecute()) {
 				List<String> argv = new ArrayList<>();
-				argv.add(exe.getAbsolutePath());
+				argv.add(cmd);
 				for (int i = 1; i < param.length; i++) argv.add(param[i]);
 
 				ProcessBuilder pb = new ProcessBuilder(argv);
