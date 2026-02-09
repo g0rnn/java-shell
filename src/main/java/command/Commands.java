@@ -44,6 +44,19 @@ public class Commands {
 			String currentDir = System.getProperty("user.dir");
 			System.out.println(currentDir);
 		});
+		commands.put("cd", (param) -> {
+			if (param.length < 2) {
+				System.out.println("cd: missing operand");
+				return;
+			}
+			String targetDir = param[1];
+			File dir = new File(targetDir);
+			if (dir.exists() && dir.isDirectory()) {
+				System.setProperty("user.dir", dir.getAbsolutePath());
+			} else {
+				System.out.println("cd: " + targetDir + ": No such file or directory");
+			}
+		});
 	}
 	
 	public void act(String input) {
