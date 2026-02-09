@@ -40,6 +40,10 @@ public class Commands {
 
 			System.out.println(builtinCmd + ": not found");
 		});
+		commands.put("pwd", (param) -> {
+			String currentDir = System.getProperty("user.dir");
+			System.out.println(currentDir);
+		});
 	}
 	
 	public void act(String input) {
