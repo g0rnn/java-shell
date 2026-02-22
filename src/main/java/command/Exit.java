@@ -1,7 +1,16 @@
-public class Exit implements Command {
+package command;
+
+import shell.ShellContext;
+
+public class Exit extends BuiltinCommand {
 
     @Override
-    public void act(String[] param) {
-        System.exit(0);
+    public String name() {
+        return "exit";
+    }
+
+    @Override
+    public CommandResult execute(CommandInput input, ShellContext context) {
+        return CommandResult.exitShell();
     }
 }

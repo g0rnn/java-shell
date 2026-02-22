@@ -1,99 +1,74 @@
 package command;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.io.File;
-import java.io.IOException;
+import java.util.Optional;
+
+import shell.ShellContext;
 
 public class Commands {
 
-	private final Map<String, Consumer<String[]>> commands = new HashMap<>();
-	
-	public void init() {
-		commands.put("exit", (param) -> System.exit(0));
-		commands.put("echo", (param) -> {
-			String output = String.join(" ", Arrays.copyOfRange(param, 1, param.length));
-            System.out.println(output);
-		});
-		commands.put("type", (param) -> {
-			String builtinCmd = param[1];
-			
-			if (commands.containsKey(builtinCmd)) {
-				System.out.println(builtinCmd + " is a shell builtin");
-				return;
-			}
-			
-			String pathEnv = System.getenv("PATH");
-			String[] paths = pathEnv.split(System.getProperty("path.separator"));
+    private final Map<String, BuiltinCommand> builtinCommands = new HashMap<>();
 
-			for (String path : paths) {
-				File file = new File(path, builtinCmd); // 단지 이 경로를 가리키는 객체만 생성한 상태
-				if (file.exists() && file.canExecute()) {
-					System.out.println(builtinCmd + " is " + file.getAbsolutePath());
-					return;
-				}
-			}
+    public Commands() {
+        register(new Exit());
+        register(new Echo());
+        register(new Pwd());
+        register(new Cd());
+        register(new Type(this));
+    }
 
-			System.out.println(builtinCmd + ": not found");
-		});
-		commands.put("pwd", (param) -> {
-			String currentDir = System.getProperty("user.dir");
-			System.out.println(currentDir);
-		});
-		commands.put("cd", (param) -> {
-			if (param.length < 2) {
-				System.out.println("cd: missing operand");
-				return;
-			}
-			String targetDir = param[1];
-			File dir = new File(targetDir);
-			if (dir.exists() && dir.isDirectory()) {
-				System.setProperty("user.dir", dir.getAbsolutePath());
-			} else {
-				System.out.println("cd: " + targetDir + ": No such file or directory");
-			}
-		});
-	}
-	
-	public void act(String input) {
-		String[] cmd = input.split(" ");
-		Consumer<String[]> action = commands.getOrDefault(cmd[0], this::notCommand);
-		action.accept(cmd);
-	}
-	
-	public void notCommand(String[] param) {
-		String cmd = param[0];
-		String pathEnv = System.getenv("PATH");
-		String[] paths = pathEnv.split(System.getProperty("path.separator"));
+    private void register(BuiltinCommand command) {
+        builtinCommands.put(command.name(), command);
+    }
 
-		for (String path : paths) {
-			File exe = new File(path, cmd); // 단지 이 경로를 가리키는 객체만 생성한 상태
-			if (exe.exists() && exe.canExecute()) {
-				List<String> argv = new ArrayList<>();
-				argv.add(cmd);
-				for (int i = 1; i < param.length; i++) argv.add(param[i]);
+    public Optional<Command> find(String commandName, ShellContext context) {
+        BuiltinCommand builtin = builtinCommands.get(commandName);
+        if (builtin != null) {
+            return Optional.of(builtin);
+        }
 
-				ProcessBuilder pb = new ProcessBuilder(argv);
-				pb.inheritIO();
+        Optional<Path> externalExecutable = findExternalExecutable(commandName, context);
+        return externalExecutable.map(path -> new ExternalCommand(commandName, path));
+    }
 
-				try {
-					Process p = pb.start();
-					p.waitFor();
-				} catch (IOException e) {
-					// 실행 자체가 실패한 경우
-					System.out.println(cmd + ": execution failed");
-				} catch (InterruptedException e) {
-					// 인터럽트 상태 복구(관례)
-					Thread.currentThread().interrupt();
-				}
-				return;
-			}
-		}
+    public boolean isBuiltin(String commandName) {
+        return builtinCommands.containsKey(commandName);
+    }
 
-		System.out.println(cmd + ": command not found");
-	}
+    public Optional<Path> findExternalExecutable(String commandName, ShellContext context) {
+        if (commandName == null || commandName.isBlank()) {
+            return Optional.empty();
+        }
+
+        if (commandName.contains("/")) {
+            Path path = context.resolvePath(commandName);
+            if (isExecutable(path)) {
+                return Optional.of(path.toAbsolutePath().normalize());
+            }
+            return Optional.empty();
+        }
+
+        String pathEnv = System.getenv("PATH");
+        if (pathEnv == null || pathEnv.isBlank()) {
+            return Optional.empty();
+        }
+
+        String[] paths = pathEnv.split(System.getProperty("path.separator"));
+        for (String pathEntry : paths) {
+            Path candidate = Paths.get(pathEntry).resolve(commandName);
+            if (isExecutable(candidate)) {
+                return Optional.of(candidate.toAbsolutePath().normalize());
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private boolean isExecutable(Path path) {
+        return Files.exists(path) && Files.isRegularFile(path) && Files.isExecutable(path);
+    }
 }

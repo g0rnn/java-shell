@@ -1,8 +1,17 @@
-public class Pwd implements Command {
+package command;
+
+import shell.ShellContext;
+
+public class Pwd extends BuiltinCommand {
 
     @Override
-    public void act(String[] param) {
-        String currentDir = System.getProperty("user.dir");
-			System.out.println(currentDir);
+    public String name() {
+        return "pwd";
+    }
+
+    @Override
+    public CommandResult execute(CommandInput input, ShellContext context) {
+        System.out.println(context.getCurrentDirectory());
+        return CommandResult.continueShell();
     }
 }

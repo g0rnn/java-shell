@@ -1,25 +1,42 @@
-public class Type implements Command {
+package command;
+
+import java.nio.file.Path;
+import java.util.Optional;
+
+import shell.ShellContext;
+
+public class Type extends BuiltinCommand {
+
+    private final Commands commands;
+
+    public Type(Commands commands) {
+        this.commands = commands;
+    }
 
     @Override
-    public void act(String[] param) {
-        String builtinCmd = param[1];
-			
-			if (commands.containsKey(builtinCmd)) {
-				System.out.println(builtinCmd + " is a shell builtin");
-				return;
-			}
-			
-			String pathEnv = System.getenv("PATH");
-			String[] paths = pathEnv.split(System.getProperty("path.separator"));
+    public String name() {
+        return "type";
+    }
 
-			for (String path : paths) {
-				File file = new File(path, builtinCmd); // 단지 이 경로를 가리키는 객체만 생성한 상태
-				if (file.exists() && file.canExecute()) {
-					System.out.println(builtinCmd + " is " + file.getAbsolutePath());
-					return;
-				}
-			}
+    @Override
+    public CommandResult execute(CommandInput input, ShellContext context) {
+        if (input.args().isEmpty()) {
+            return CommandResult.continueShell();
+        }
 
-			System.out.println(builtinCmd + ": not found");
+        String commandName = input.args().get(0);
+        if (commands.isBuiltin(commandName)) {
+            System.out.println(commandName + " is a shell builtin");
+            return CommandResult.continueShell();
+        }
+
+        Optional<Path> executablePath = commands.findExternalExecutable(commandName, context);
+        if (executablePath.isPresent()) {
+            System.out.println(commandName + " is " + executablePath.get());
+            return CommandResult.continueShell();
+        }
+
+        System.out.println(commandName + ": not found");
+        return CommandResult.continueShell();
     }
 }

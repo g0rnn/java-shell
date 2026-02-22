@@ -1,3 +1,11 @@
+package command;
+
+import shell.ShellContext;
+
 public interface Command {
-    void act(String[] param);
+    String name();
+
+    CommandKind kind();
+
+    CommandResult execute(CommandInput input, ShellContext context);
 }
