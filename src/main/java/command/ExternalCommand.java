@@ -30,7 +30,9 @@ public class ExternalCommand implements Command {
     @Override
     public CommandResult execute(CommandInput input, ShellContext context) {
         List<String> argv = new ArrayList<>();
-        argv.add(executablePath.toString());
+        // Keep argv[0] as the command token the user typed.
+        // This matches shell behavior expected by the tests.
+        argv.add(name);
         argv.addAll(input.args());
 
         ProcessBuilder processBuilder = new ProcessBuilder(argv);
